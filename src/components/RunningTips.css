@@ -1,0 +1,44 @@
+.running-tips {
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.running-tips h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.tip-card {
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 15px;
+  border-left: 4px solid #667eea;
+}
+
+.tip-card h3 {
+  color: #667eea;
+  margin-bottom: 0.75rem;
+  font-size: 1.2rem;
+}
+
+.tip-card p {
+  color: #555;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+}

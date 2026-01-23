@@ -1,0 +1,91 @@
+.stretching-routine {
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stretching-routine h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.stretch-section {
+  margin-bottom: 2rem;
+}
+
+.stretch-section:last-child {
+  margin-bottom: 0;
+}
+
+.stretch-section h3 {
+  color: #667eea;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+.stretch-section h4 {
+  color: #555;
+  margin: 1.5rem 0 1rem 0;
+  font-size: 1.1rem;
+}
+
+.section-description {
+  color: #666;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.stretch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stretch-item {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 3px solid #667eea;
+}
+
+.stretch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.stretch-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.05rem;
+}
+
+.stretch-duration {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.stretch-description {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.immediate-stretches,
+.full-stretches {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .stretch-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

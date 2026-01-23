@@ -1,0 +1,124 @@
+.jillian-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+  width: 100%;
+}
+
+.jillian-timer-display {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(238, 90, 111, 0.4);
+  transition: all 0.3s ease;
+  border: 8px solid white;
+}
+
+.jillian-timer-display.active {
+  box-shadow: 0 8px 40px rgba(238, 90, 111, 0.6);
+  transform: scale(1.02);
+}
+
+.jillian-timer-display.low-time {
+  background: linear-gradient(135deg, #ff4757 0%, #c44569 100%);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.jillian-timer-time {
+  font-size: 5rem;
+  font-weight: 900;
+  color: white;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.jillian-timer-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.jillian-motivation {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ff4757;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s ease-out;
+  white-space: nowrap;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.jillian-progress-bar {
+  width: 100%;
+  max-width: 400px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+.jillian-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b 0%, #ee5a6f 100%);
+  transition: width 0.5s linear;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .jillian-timer-display {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .jillian-timer-time {
+    font-size: 4rem;
+  }
+  
+  .jillian-timer-label {
+    font-size: 1rem;
+  }
+  
+  .jillian-motivation {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    top: -50px;
+  }
+}
