@@ -135,7 +135,6 @@ function WorkoutDetail() {
 
         <div className="exercise-display">
           <div className="exercise-card">
-            <div className="exercise-icon">{currentExercise.icon || '•'}</div>
             <h2>{currentExercise.name}</h2>
             <p className="exercise-instructions">{currentExercise.instructions}</p>
             
@@ -204,7 +203,6 @@ function WorkoutDetail() {
                   setIsActive(false)
                 }}
               >
-                <span className="exercise-list-icon">{exercise.icon || '•'}</span>
                 <span className="exercise-list-name">{exercise.name}</span>
                 <span className="exercise-list-duration">{exercise.duration}s</span>
               </li>

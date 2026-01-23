@@ -1,7 +1,13 @@
 .workout-generator-page {
   min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #fde8e0 0%, #fad4c8 50%, #f8c4b4 100%);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .workout-generator-header {
@@ -11,28 +17,27 @@
 }
 
 .back-link {
-  color: white;
+  color: #b85c50;
   text-decoration: none;
   font-size: 1rem;
   margin-bottom: 1rem;
   display: inline-block;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .back-link:hover {
-  opacity: 1;
+  color: #9a4d42;
 }
 
 .workout-generator-header h1 {
-  color: white;
+  color: #4a3728;
   font-size: 2.5rem;
   margin: 1rem 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .page-subtitle {
-  color: rgba(255, 255, 255, 0.9);
+  color: #5c4535;
   font-size: 1.2rem;
   margin-top: 0.5rem;
 }

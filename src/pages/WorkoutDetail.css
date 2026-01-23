@@ -1,6 +1,12 @@
 .workout-detail {
   min-height: 100vh;
   padding: 2rem;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .workout-detail-container {
@@ -9,7 +15,7 @@
 }
 
 .workout-detail-header .back-link {
-  color: #5473e6;
+  color: #b85c50;
   text-decoration: none;
   font-size: 1rem;
   margin-bottom: 1rem;
@@ -19,7 +25,7 @@
 }
 
 .workout-detail-header .back-link:hover {
-  color: #3d5dd1;
+  color: #9a4d42;
 }
 
 .workout-detail-header {
@@ -62,7 +68,7 @@
 .workout-duration-badge,
 .difficulty-badge,
 .workout-type-badge {
-  background: #8c80d8;
+  background: linear-gradient(135deg, #d49080 0%, #c87868 100%);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -91,7 +97,8 @@
 .progress-fill {
   height: 100%;
   background: #F54D4D;
-  transition: width 0.3s ease;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left;
 }
 
 .progress-text {
@@ -109,16 +116,23 @@
   padding: 3rem;
   border-radius: 20px;
   text-align: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  animation: exerciseIn 0.35s ease;
 }
 
-.exercise-icon {
-  font-size: 5rem;
-  margin-bottom: 1rem;
+@keyframes exerciseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .exercise-card h2 {
-  color: #5473e6;
+  color: #b85c50;
   font-size: 2rem;
   margin-bottom: 1rem;
 }
@@ -197,7 +211,7 @@
   margin-bottom: 0.5rem;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   border: 2px solid transparent;
   background: #f9fafb;
 }
@@ -211,13 +225,6 @@
   background: #F54D4D;
   color: white;
   border-color: #F54D4D;
-}
-
-.exercise-list-icon {
-  font-size: 1.5rem;
-  margin-right: 1rem;
-  width: 40px;
-  text-align: center;
 }
 
 .exercise-list-name {
@@ -243,10 +250,6 @@
 @media (max-width: 768px) {
   .exercise-card {
     padding: 2rem 1.5rem;
-  }
-  
-  .exercise-icon {
-    font-size: 4rem;
   }
   
   .exercise-card h2 {

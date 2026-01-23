@@ -37,9 +37,9 @@ function JillianTimer({ duration, isActive, onComplete, timeRemaining, setTimeRe
   }, [timeRemaining, isActive])
 
   const getMotivationalMessage = () => {
-    if (timeRemaining === 10) return "You've got this! 💪"
-    if (timeRemaining === 5) return "Almost there! 🔥"
-    if (timeRemaining === 3) return "Push through! ⚡"
+    if (timeRemaining === 10) return "You've got this!"
+    if (timeRemaining === 5) return "Almost there!"
+    if (timeRemaining === 3) return "Push through!"
     return ""
   }
 

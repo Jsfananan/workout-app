@@ -21,7 +21,7 @@
 }
 
 .stretch-section h3 {
-  color: #667eea;
+  color: #b85c50;
   margin-bottom: 0.5rem;
   font-size: 1.3rem;
 }
@@ -45,10 +45,15 @@
 }
 
 .stretch-item {
-  background: #f9fafb;
+  background: #fefaf8;
   padding: 1rem;
   border-radius: 10px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #d49080;
+  transition: transform 0.2s ease;
+}
+
+.stretch-item:hover {
+  transform: translateX(2px);
 }
 
 .stretch-header {
@@ -65,7 +70,7 @@
 }
 
 .stretch-duration {
-  color: #667eea;
+  color: #b85c50;
   font-weight: 600;
   font-size: 0.9rem;
 }

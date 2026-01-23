@@ -19,14 +19,20 @@
 }
 
 .tip-card {
-  background: #f9fafb;
+  background: #fefaf8;
   padding: 1.5rem;
   border-radius: 15px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #d49080;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tip-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 12px rgba(216, 144, 128, 0.15);
 }
 
 .tip-card h3 {
-  color: #667eea;
+  color: #b85c50;
   margin-bottom: 0.75rem;
   font-size: 1.2rem;
 }

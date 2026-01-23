@@ -132,7 +132,7 @@ export function getCurrentWorkout(programId, startDate) {
   const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1
 
   if (daysSinceStart > program.duration_days) {
-    return { status: 'completed', message: 'Program completed! Great job! 🎉' }
+    return { status: 'completed', message: 'Program completed! Great job!' }
   }
 
   if (daysSinceStart < 1) {
@@ -142,13 +142,13 @@ export function getCurrentWorkout(programId, startDate) {
   const todaySchedule = program.calendar.find(day => day.day === daysSinceStart)
 
   if (!todaySchedule) {
-    return { status: 'rest', message: 'Rest day - recovery is important! 💪' }
+    return { status: 'rest', message: 'Rest day - recovery is important!' }
   }
 
   if (todaySchedule.workout_type === 'rest') {
     return { 
       status: 'rest', 
-      message: 'Rest day - recovery is important! 💪',
+      message: 'Rest day - recovery is important!',
       day: daysSinceStart,
       totalDays: program.duration_days,
       phase: todaySchedule.phase

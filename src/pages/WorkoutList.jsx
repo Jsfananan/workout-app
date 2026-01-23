@@ -15,14 +15,12 @@ function WorkoutList() {
         </div>
 
         <div className="workouts-grid">
-          {workouts.map((workout) => {
+          {workouts.map((workout, index) => {
             if (workout.configurable) {
               const opts = config[workout.id] ?? { duration: workout.baseDuration ?? workout.duration, intensity: (workout.difficulty || 'Intermediate').toLowerCase() }
               return (
-                <div key={workout.id} className="workout-card workout-card--configurable">
-                  <div className="workout-card-image">
-                    {workout.icon || '•'}
-                  </div>
+                <div key={workout.id} className="workout-card workout-card--configurable" style={{ animationDelay: `${index * 0.06}s` }}>
+                  <div className="workout-card-image" aria-hidden="true" />
                   <div className="workout-card-content">
                     <h3>{workout.name}</h3>
                     <p className="workout-duration">{opts.duration} min · {opts.intensity}</p>
@@ -66,10 +64,9 @@ function WorkoutList() {
                 key={workout.id}
                 to={`/workout/${workout.id}`}
                 className="workout-card"
+                style={{ animationDelay: `${index * 0.06}s` }}
               >
-                <div className="workout-card-image">
-                  {workout.icon || '•'}
-                </div>
+                <div className="workout-card-image" aria-hidden="true" />
                 <div className="workout-card-content">
                   <h3>{workout.name}</h3>
                   <p className="workout-duration">{workout.duration} minutes</p>

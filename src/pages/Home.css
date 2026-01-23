@@ -4,7 +4,13 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: #8c80d8;
+  background: linear-gradient(135deg, #fde8e0 0%, #fad4c8 50%, #f8c4b4 100%);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .home-container {
@@ -15,16 +21,28 @@
 
 .home-title {
   font-size: 3.5rem;
-  color: white;
+  color: #4a3728;
   margin-bottom: 1rem;
   font-weight: 700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.6s ease 0.1s both;
 }
 
 .home-subtitle {
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: #5c4535;
   margin-bottom: 3rem;
+  animation: slideUp 0.6s ease 0.2s both;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .home-actions {
@@ -32,6 +50,7 @@
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+  animation: slideUp 0.6s ease 0.3s both;
 }
 
 .btn {
@@ -60,14 +79,15 @@
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.6);
+  color: #5c4033;
+  border: 2px solid #d49080;
 }
 
 .btn-secondary:hover {
   background: white;
-  color: #8c80d8;
+  color: #b85c50;
+  border-color: #b85c50;
 }
 
 .btn-success {
