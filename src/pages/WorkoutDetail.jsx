@@ -1,12 +1,13 @@
-import { useParams, Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { workouts } from '../data/workouts'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import { workouts, buildConfigurableExercises } from '../data/workouts'
 import Timer from '../components/Timer'
 import JillianTimer from '../components/JillianTimer'
 import './WorkoutDetail.css'
 
 function WorkoutDetail() {
   const { id } = useParams()
+  const [search] = useSearchParams()
   const [workout, setWorkout] = useState(null)
   const [loading, setLoading] = useState(true)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
@@ -27,11 +28,26 @@ function WorkoutDetail() {
     setLoading(false)
   }, [id])
 
-  useEffect(() => {
-    if (workout && workout.exercises && workout.exercises.length > 0) {
-      setTimeRemaining(workout.exercises[0].duration)
+  const resolvedWorkout = useMemo(() => {
+    if (!workout) return null
+    if (workout.configurable && workout.exercisesByIntensity) {
+      const duration = parseInt(search.get('duration'), 10) || workout.baseDuration || workout.duration
+      const intensity = search.get('intensity') || workout.difficulty?.toLowerCase() || 'intermediate'
+      const exercises = buildConfigurableExercises(workout, duration, intensity)
+      if (exercises && exercises.length > 0) {
+        return { ...workout, exercises, duration }
+      }
     }
-  }, [workout])
+    return workout
+  }, [workout, search])
+
+  const displayWorkout = resolvedWorkout || workout
+
+  useEffect(() => {
+    if (displayWorkout && displayWorkout.exercises && displayWorkout.exercises.length > 0) {
+      setTimeRemaining(displayWorkout.exercises[0].duration)
+    }
+  }, [displayWorkout])
 
   if (loading) {
     return (
@@ -43,7 +59,7 @@ function WorkoutDetail() {
     )
   }
 
-  if (!workout || !workout.exercises || workout.exercises.length === 0) {
+  if (!workout || !displayWorkout || !displayWorkout.exercises || displayWorkout.exercises.length === 0) {
     return (
       <div className="workout-detail">
         <div className="workout-detail-container">
@@ -54,21 +70,22 @@ function WorkoutDetail() {
     )
   }
 
-  const currentExercise = workout.exercises[currentExerciseIndex]
-  const progress = ((currentExerciseIndex + 1) / workout.exercises.length) * 100
+  const exercises = displayWorkout.exercises
+  const currentExercise = exercises[currentExerciseIndex]
+  const progress = ((currentExerciseIndex + 1) / exercises.length) * 100
 
   const handleNext = () => {
     setIsActive(false)
-    if (currentExerciseIndex < workout.exercises.length - 1) {
+    if (currentExerciseIndex < exercises.length - 1) {
       setCurrentExerciseIndex(currentExerciseIndex + 1)
-      setTimeRemaining(workout.exercises[currentExerciseIndex + 1].duration)
+      setTimeRemaining(exercises[currentExerciseIndex + 1].duration)
     }
   }
 
   const handlePrevious = () => {
     if (currentExerciseIndex > 0) {
       setCurrentExerciseIndex(currentExerciseIndex - 1)
-      setTimeRemaining(workout.exercises[currentExerciseIndex - 1].duration)
+      setTimeRemaining(exercises[currentExerciseIndex - 1].duration)
       setIsActive(false)
     }
   }
@@ -82,14 +99,14 @@ function WorkoutDetail() {
       <div className="workout-detail-container">
         <div className="workout-detail-header">
           <Link to="/workouts" className="back-link">← Back to Workouts</Link>
-          <h1>{workout.name}</h1>
+          <h1>{displayWorkout.name}</h1>
           <div className="workout-meta">
-            <span className="workout-duration-badge">{workout.duration} min</span>
-            <span className={`difficulty-badge difficulty-${workout.difficulty.toLowerCase()}`}>
-              {workout.difficulty}
+            <span className="workout-duration-badge">{displayWorkout.duration} min</span>
+            <span className={`difficulty-badge difficulty-${displayWorkout.configurable ? (search.get('intensity') || 'intermediate') : (displayWorkout.difficulty || 'intermediate').toLowerCase()}`}>
+              {(displayWorkout.configurable ? (search.get('intensity') || 'intermediate') : (displayWorkout.difficulty || 'intermediate').toLowerCase()).replace(/^\w/, c => c.toUpperCase())}
             </span>
-            {workout.type && (
-              <span className="workout-type-badge">{workout.type}</span>
+            {displayWorkout.type && (
+              <span className="workout-type-badge">{displayWorkout.type}</span>
             )}
           </div>
           <div className="timer-toggle">
@@ -112,7 +129,7 @@ function WorkoutDetail() {
             ></div>
           </div>
           <p className="progress-text">
-            Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
+            Exercise {currentExerciseIndex + 1} of {exercises.length}
           </p>
         </div>
 
@@ -155,7 +172,7 @@ function WorkoutDetail() {
                   Previous
                 </button>
               )}
-              {currentExerciseIndex < workout.exercises.length - 1 ? (
+              {currentExerciseIndex < exercises.length - 1 ? (
                 <button 
                   onClick={handleNext}
                   className="btn btn-primary"
@@ -177,7 +194,7 @@ function WorkoutDetail() {
         <div className="exercise-list">
           <h3>Exercise List</h3>
           <ul>
-            {workout.exercises.map((exercise, index) => (
+            {exercises.map((exercise, index) => (
               <li 
                 key={index}
                 className={index === currentExerciseIndex ? 'active' : ''}

@@ -16,24 +16,6 @@ function Home() {
             Browse Workouts
           </Link>
         </div>
-
-        <div className="home-features">
-          <div className="feature-card">
-            <div className="feature-icon">⚡</div>
-            <h3>Custom Workouts</h3>
-            <p>Tailored exercise routines for your fitness goals</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">⏱</div>
-            <h3>Timer & Tracking</h3>
-            <p>Track your progress and stay on schedule</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">📈</div>
-            <h3>Progress Tracking</h3>
-            <p>Monitor your fitness journey</p>
-          </div>
-        </div>
       </div>
     </div>
   )

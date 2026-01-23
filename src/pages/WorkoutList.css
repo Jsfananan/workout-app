@@ -13,24 +13,23 @@
 }
 
 .back-link {
-  color: white;
+  color: #5473e6;
   text-decoration: none;
   font-size: 1rem;
   margin-bottom: 1rem;
   display: inline-block;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .back-link:hover {
-  opacity: 1;
+  color: #3d5dd1;
 }
 
 .workout-list-header h1 {
-  color: white;
+  color: #1f2937;
   font-size: 2.5rem;
   margin-top: 1rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .workouts-grid {
@@ -57,7 +56,7 @@
 }
 
 .workout-card-image {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #8c80d8;
   padding: 3rem;
   text-align: center;
   font-size: 4rem;
@@ -71,19 +70,19 @@
 }
 
 .workout-card-content h3 {
-  color: #333;
+  color: #5473e6;
   margin-bottom: 0.5rem;
   font-size: 1.5rem;
 }
 
 .workout-duration {
-  color: #667eea;
+  color: #F54D4D;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .workout-difficulty {
-  color: #666;
+  color: #6b7280;
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }
@@ -104,9 +103,59 @@
 }
 
 .workout-description {
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
   flex: 1;
+}
+
+.workout-card--configurable {
+  text-decoration: none;
+  color: inherit;
+  cursor: default;
+}
+
+.workout-card-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.workout-card-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.workout-card-options select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  color: #1f2937;
+  min-width: 120px;
+}
+
+.workout-card-start {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background: #F54D4D;
+  color: white;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.workout-card-start:hover {
+  background: #e04545;
+  color: white;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {

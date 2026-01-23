@@ -8,15 +8,28 @@
   margin: 0 auto;
 }
 
+.workout-detail-header .back-link {
+  color: #5473e6;
+  text-decoration: none;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.workout-detail-header .back-link:hover {
+  color: #3d5dd1;
+}
+
 .workout-detail-header {
   margin-bottom: 2rem;
 }
 
 .workout-detail-header h1 {
-  color: white;
+  color: #1f2937;
   font-size: 2.5rem;
   margin: 1rem 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .workout-meta {
@@ -33,7 +46,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: white;
+  color: #6b7280;
   font-size: 1rem;
   cursor: pointer;
   user-select: none;
@@ -43,13 +56,13 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #F54D4D;
 }
 
 .workout-duration-badge,
 .difficulty-badge,
 .workout-type-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: #8c80d8;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -77,12 +90,12 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: #F54D4D;
   transition: width 0.3s ease;
 }
 
 .progress-text {
-  color: #666;
+  color: #6b7280;
   font-weight: 600;
   text-align: center;
 }
@@ -105,13 +118,13 @@
 }
 
 .exercise-card h2 {
-  color: #333;
+  color: #5473e6;
   font-size: 2rem;
   margin-bottom: 1rem;
 }
 
 .exercise-instructions {
-  color: #666;
+  color: #6b7280;
   font-size: 1.1rem;
   line-height: 1.6;
   margin-bottom: 2rem;
@@ -130,9 +143,13 @@
 }
 
 .exercise-controls .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #F54D4D;
   color: white;
   border: none;
+}
+
+.exercise-controls .btn-primary:hover {
+  background: #e04545;
 }
 
 .exercise-controls .btn-secondary {
@@ -191,9 +208,9 @@
 }
 
 .exercise-list li.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #F54D4D;
   color: white;
-  border-color: #667eea;
+  border-color: #F54D4D;
 }
 
 .exercise-list-icon {
@@ -214,7 +231,7 @@
 }
 
 .exercise-list-duration {
-  color: #666;
+  color: #6b7280;
   font-size: 0.9rem;
   font-weight: 600;
 }
