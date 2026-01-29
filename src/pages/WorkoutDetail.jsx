@@ -13,6 +13,7 @@ function WorkoutDetail() {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(0)
+  const [expandedExercises, setExpandedExercises] = useState(new Set())
   const [useJillianTimer, setUseJillianTimer] = useState(() => {
     const saved = localStorage.getItem('useJillianTimer')
     return saved ? JSON.parse(saved) : false
@@ -71,8 +72,21 @@ function WorkoutDetail() {
   }
 
   const exercises = displayWorkout.exercises
+  const isRaceWorkout = displayWorkout.type === 'running' || displayWorkout.type === 'treadmill'
   const currentExercise = exercises[currentExerciseIndex]
   const progress = ((currentExerciseIndex + 1) / exercises.length) * 100
+
+  const toggleExercise = (index) => {
+    setExpandedExercises(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
+      }
+      return newSet
+    })
+  }
 
   const handleNext = () => {
     setIsActive(false)
@@ -94,6 +108,71 @@ function WorkoutDetail() {
     alert('Workout completed! Great job!')
   }
 
+  // Simplified summary view for non-race workouts
+  if (!isRaceWorkout) {
+    return (
+      <div className="workout-detail">
+        <div className="workout-detail-container">
+          <div className="workout-detail-header">
+            <Link to="/workouts" className="back-link">← Back to Workouts</Link>
+            <h1>{displayWorkout.name}</h1>
+            <div className="workout-meta">
+              <span className="workout-duration-badge">{displayWorkout.duration} min</span>
+              <span className={`difficulty-badge difficulty-${displayWorkout.configurable ? (search.get('intensity') || 'intermediate') : (displayWorkout.difficulty || 'intermediate').toLowerCase()}`}>
+                {(displayWorkout.configurable ? (search.get('intensity') || 'intermediate') : (displayWorkout.difficulty || 'intermediate').toLowerCase()).replace(/^\w/, c => c.toUpperCase())}
+              </span>
+            </div>
+          </div>
+
+          <div className="workout-summary">
+            <div className="exercise-summary-list">
+              {exercises.map((exercise, index) => {
+                const isExpanded = expandedExercises.has(index)
+                const durationMinutes = Math.floor(exercise.duration / 60)
+                const durationSeconds = exercise.duration % 60
+                const durationDisplay = durationMinutes > 0 
+                  ? `${durationMinutes}m ${durationSeconds > 0 ? durationSeconds + 's' : ''}`.trim()
+                  : `${durationSeconds}s`
+
+                return (
+                  <div key={index} className="exercise-summary-item">
+                    <div 
+                      className="exercise-summary-header"
+                      onClick={() => toggleExercise(index)}
+                    >
+                      <div className="exercise-summary-title">
+                        <span className="exercise-number">{index + 1}.</span>
+                        <span className="exercise-name">{exercise.name}</span>
+                        <span className="exercise-duration">{durationDisplay}</span>
+                      </div>
+                      <span className={`exercise-toggle ${isExpanded ? 'expanded' : ''}`}>
+                        {isExpanded ? '−' : '+'}
+                      </span>
+                    </div>
+                    {isExpanded && (
+                      <div className="exercise-summary-content">
+                        <p className="exercise-instructions">{exercise.instructions}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="workout-complete-section">
+              <button 
+                onClick={handleComplete}
+                className="btn btn-success btn-complete-workout"
+              >
+                Complete Workout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="workout-detail">
       <div className="workout-detail-container">
@@ -109,16 +188,18 @@ function WorkoutDetail() {
               <span className="workout-type-badge">{displayWorkout.type}</span>
             )}
           </div>
-          <div className="timer-toggle">
-            <label className="timer-toggle-label">
-              <input
-                type="checkbox"
-                checked={useJillianTimer}
-                onChange={(e) => setUseJillianTimer(e.target.checked)}
-              />
-              <span>Use Jillian's Timer Style</span>
-            </label>
-          </div>
+          {isRaceWorkout && (
+            <div className="timer-toggle">
+              <label className="timer-toggle-label">
+                <input
+                  type="checkbox"
+                  checked={useJillianTimer}
+                  onChange={(e) => setUseJillianTimer(e.target.checked)}
+                />
+                <span>Use Jillian's Timer Style</span>
+              </label>
+            </div>
+          )}
         </div>
 
         <div className="workout-progress">
