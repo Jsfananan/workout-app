@@ -139,3 +139,28 @@
     font-size: 2rem;
   }
 }
+
+.schedule-date {
+  color: #8a7565;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.schedule-makeup {
+  border-top: 1px solid #f0e0d8;
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.schedule-makeup-label {
+  color: #8a7565;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.schedule-toggle-btn--small {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}

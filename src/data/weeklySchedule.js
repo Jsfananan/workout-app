@@ -93,6 +93,37 @@ export const weeklySchedule = [
   }
 ]
 
+// Make-up workouts: drop a missed session onto a cardio day for that date only.
+// Stored per calendar date so it clears itself once the week rolls over.
+export const MAKEUP_OPTIONS = [
+  { workoutId: 2, label: 'Full Body Strength' },
+  { workoutId: 3, label: 'Core Crusher' },
+  { workoutId: 1, label: 'Quick Cardio Blast' }
+]
+
+export const toISODate = (date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// Dates of the Sunday-to-Saturday week containing `now`, indexed by day.
+export const getWeekDates = (now = new Date()) => {
+  const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+  return weeklySchedule.map((_, i) => {
+    const date = new Date(sunday)
+    date.setDate(sunday.getDate() + i)
+    return date
+  })
+}
+
+// Drop stored make-ups that belong to an earlier week.
+export const pruneMakeups = (makeups, weekDates) => {
+  const weekStart = toISODate(weekDates[0])
+  return Object.fromEntries(Object.entries(makeups).filter(([date]) => date >= weekStart))
+}
+
 export const getDayPlan = (dayIndex) =>
   weeklySchedule.find(d => d.dayIndex === dayIndex)
 

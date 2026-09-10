@@ -1,15 +1,31 @@
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { workouts } from '../data/workouts'
 import {
   weeklySchedule,
   CARDIO_OPTIONS,
   DEFAULT_CARDIO_OPTION,
-  getCardioOption
+  MAKEUP_OPTIONS,
+  getCardioOption,
+  getWeekDates,
+  pruneMakeups,
+  toISODate
 } from '../data/weeklySchedule'
 import './Schedule.css'
 
 const STORAGE_KEY = 'weeklyCardioChoices'
+const MAKEUP_STORAGE_KEY = 'weeklyMakeupWorkouts'
+
+const readStored = (key) => {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {}
+  } catch {
+    return {}
+  }
+}
+
+const dayLabel = (date) =>
+  date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
 const getWorkout = (id) => workouts.find(w => w.id === id)
 
@@ -22,22 +38,37 @@ const workoutLink = (workout) => {
 }
 
 function Schedule() {
-  const [cardioChoices, setCardioChoices] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
-    } catch {
-      return {}
-    }
-  })
+  const [cardioChoices, setCardioChoices] = useState(() => readStored(STORAGE_KEY))
+
+  const weekDates = useMemo(() => getWeekDates(), [])
+
+  // Make-ups are keyed by date, so last week's leftovers are dropped on load.
+  const [makeups, setMakeups] = useState(() => pruneMakeups(readStored(MAKEUP_STORAGE_KEY), weekDates))
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cardioChoices))
   }, [cardioChoices])
 
+  useEffect(() => {
+    localStorage.setItem(MAKEUP_STORAGE_KEY, JSON.stringify(makeups))
+  }, [makeups])
+
   const today = new Date().getDay()
 
   const setChoice = (dayIndex, optionId) =>
     setCardioChoices(prev => ({ ...prev, [dayIndex]: optionId }))
+
+  // Clicking the selected make-up again clears it.
+  const toggleMakeup = (date, workoutId) =>
+    setMakeups(prev => {
+      const next = { ...prev }
+      if (next[date] === workoutId) {
+        delete next[date]
+      } else {
+        next[date] = workoutId
+      }
+      return next
+    })
 
   return (
     <div className="schedule">
@@ -53,11 +84,13 @@ function Schedule() {
         <div className="schedule-days">
           {weeklySchedule.map((day, index) => {
             const isToday = day.dayIndex === today
+            const date = toISODate(weekDates[day.dayIndex])
             const choiceId = cardioChoices[day.dayIndex] ?? DEFAULT_CARDIO_OPTION
             const cardioChoice = day.type === 'cardio' ? getCardioOption(choiceId) : null
             const workout = getWorkout(
               day.type === 'cardio' ? cardioChoice.workoutId : day.workoutId
             )
+            const makeupWorkout = day.type === 'cardio' ? getWorkout(makeups[date]) : null
 
             return (
               <div
@@ -67,7 +100,9 @@ function Schedule() {
               >
                 <div className="schedule-day-header">
                   <h2>{day.day}</h2>
-                  {isToday && <span className="schedule-today-badge">Today</span>}
+                  {isToday
+                    ? <span className="schedule-today-badge">Today</span>
+                    : <span className="schedule-date">{dayLabel(weekDates[day.dayIndex])}</span>}
                 </div>
 
                 <p className="schedule-day-title">
@@ -101,6 +136,31 @@ function Schedule() {
 
                 {!workout && day.type === 'cardio' && (
                   <p className="schedule-no-workout">No timer needed — just go run.</p>
+                )}
+
+                {day.type === 'cardio' && (
+                  <div className="schedule-makeup">
+                    <p className="schedule-makeup-label">Missed a day? Add a workout:</p>
+                    <div className="schedule-toggle" role="group" aria-label={`${day.day} make-up workout`}>
+                      {MAKEUP_OPTIONS.map(option => (
+                        <button
+                          key={option.workoutId}
+                          type="button"
+                          className={`schedule-toggle-btn schedule-toggle-btn--small${makeups[date] === option.workoutId ? ' schedule-toggle-btn--active' : ''}`}
+                          aria-pressed={makeups[date] === option.workoutId}
+                          onClick={() => toggleMakeup(date, option.workoutId)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {makeupWorkout && (
+                      <Link to={workoutLink(makeupWorkout)} className="btn btn-secondary schedule-start">
+                        Start {makeupWorkout.name}
+                      </Link>
+                    )}
+                  </div>
                 )}
               </div>
             )
