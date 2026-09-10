@@ -54,7 +54,7 @@ export const weeklySchedule = [
     short: 'Tue',
     type: 'strength',
     title: 'Strength Workout',
-    description: 'Full Body Strength — pick your duration and intensity.',
+    description: 'Full Body Strength — pick your sets and intensity.',
     workoutId: 2
   },
   {
@@ -71,7 +71,7 @@ export const weeklySchedule = [
     short: 'Thu',
     type: 'strength',
     title: 'Strength Workout',
-    description: 'Full Body Strength — pick your duration and intensity.',
+    description: 'Full Body Strength — pick your sets and intensity.',
     workoutId: 2
   },
   {
@@ -88,7 +88,7 @@ export const weeklySchedule = [
     short: 'Sat',
     type: 'strength',
     title: 'Strength Workout',
-    description: 'Full Body Strength — pick your duration and intensity.',
+    description: 'Full Body Strength — pick your sets and intensity.',
     workoutId: 2
   }
 ]

@@ -2,6 +2,8 @@
 
 This guide covers several ways to deploy your React + Vite workout app.
 
+The app uses hash-based routing (`/#/schedule`), so the built `dist/` folder works on any static host without server rewrite rules. Run `npm run check` before deploying.
+
 ## Option 1: Vercel (Recommended - Easiest)
 
 Vercel is the easiest option and works great with React apps.

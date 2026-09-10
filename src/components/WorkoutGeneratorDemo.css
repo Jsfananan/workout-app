@@ -1,47 +1,51 @@
 .workout-generator-demo {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 1.5rem;
+  align-items: start;
 }
 
-.generator-form {
+.generator-form,
+.generated-workout {
   background: white;
-  padding: 2rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(216, 144, 128, 0.2);
 }
 
-.generator-form h2 {
-  color: #b85c50;
-  margin-bottom: 1.5rem;
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.form-group label {
+.form-group label,
+.form-label {
   display: block;
-  color: #333;
+  color: #5c4535;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
 }
 
-.form-group select,
-.form-group input[type="number"] {
+.form-group select {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: 2px solid #f0e0d8;
+  border-radius: 10px;
   font-size: 1rem;
-  transition: border-color 0.3s ease;
+  background: white;
+  color: #1f2937;
+  font-family: inherit;
 }
 
-.form-group select:focus,
-.form-group input[type="number"]:focus {
+.form-group select:focus {
   outline: none;
   border-color: #d49080;
 }
@@ -49,7 +53,7 @@
 .checkbox-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem 1.25rem;
 }
 
 .checkbox-label {
@@ -57,130 +61,91 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  font-weight: normal;
+  font-weight: 500;
+  color: #4b5563;
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: auto;
-  cursor: pointer;
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: #F54D4D;
 }
 
-.generate-btn {
+.generate-btn,
+.generate-start {
+  display: block;
   width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, #d49080 0%, #c87868 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.generate-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(196, 120, 104, 0.4);
+  border-radius: 14px;
 }
 
 .error-message {
   margin-top: 1rem;
-  padding: 1rem;
-  background: #fee;
-  color: #c33;
-  border-radius: 8px;
-  border: 1px solid #fcc;
-}
-
-.generated-workout {
-  background: white;
-  padding: 2rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.workout-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 10px;
+  font-weight: 500;
 }
 
 .workout-header h2 {
   color: #b85c50;
-  margin-bottom: 1rem;
+  font-size: 1.5rem;
 }
 
 .workout-stats {
-  display: flex;
-  gap: 2rem;
+  color: #5c4535;
+  margin: 0.35rem 0 1rem;
+  font-weight: 500;
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 0.25rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #b85c50;
-}
-
-.workout-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.section {
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 10px;
-}
-
-.section h3 {
-  color: #333;
-  margin-bottom: 0.75rem;
-  font-size: 1.2rem;
-}
-
-.section h4 {
-  color: #b85c50;
-  margin: 0.75rem 0 0.5rem 0;
-  font-size: 1rem;
-}
-
-.section ul {
+.generated-list {
   list-style: none;
-  padding: 0;
-  margin: 0;
+  margin-bottom: 1.25rem;
 }
 
-.section li {
-  padding: 0.5rem 0;
-  color: #555;
-  border-bottom: 1px solid #e5e7eb;
+.generated-item {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f3e6df;
 }
 
-.section li:last-child {
+.generated-item:last-child {
   border-bottom: none;
 }
 
-.circuit-section {
-  margin-top: 1rem;
-  padding-left: 1rem;
-  border-left: 3px solid #d49080;
+.generated-slot {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b85c50;
+  background: #fde8e0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50px;
+  text-align: center;
 }
 
-@media (max-width: 968px) {
+.generated-item--warmup .generated-slot,
+.generated-item--cooldown .generated-slot {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.generated-name {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.generated-sets {
+  color: #8a7565;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
   .workout-generator-demo {
     grid-template-columns: 1fr;
   }

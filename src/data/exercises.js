@@ -53,14 +53,6 @@ const createExercise = (data) => {
   }
 }
 
-// Helper to find exercise IDs by name pattern (for alternatives)
-const findExerciseIds = (namePatterns) => {
-  return exercises
-    .filter(ex => namePatterns.some(pattern => ex.name.toLowerCase().includes(pattern.toLowerCase())))
-    .map(ex => ex.exercise_id)
-    .slice(0, 10)
-}
-
 // Main exercises array
 export const exercises = [
   // ============================================
@@ -3168,7 +3160,6 @@ const initializeRelationships = () => {
   const kneePushups = exercises.find(e => e.name === "Knee Push-ups")
   const standardPushups = exercises.find(e => e.name === "Standard Push-ups")
   const widePushups = exercises.find(e => e.name === "Wide Push-ups")
-  const narrowPushups = exercises.find(e => e.name === "Narrow Push-ups")
   const oneArmPushups = exercises.find(e => e.name === "One-Arm Push-ups")
   
   if (kneePushups && standardPushups) {

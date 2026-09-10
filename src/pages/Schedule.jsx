@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
-import { workouts } from '../data/workouts'
+import { getWorkoutById } from '../data/workouts'
+import { getHistoryForDate, workoutPath } from '../utils/storage'
 import {
   weeklySchedule,
   CARDIO_OPTIONS,
@@ -26,16 +27,6 @@ const readStored = (key) => {
 
 const dayLabel = (date) =>
   date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-
-const getWorkout = (id) => workouts.find(w => w.id === id)
-
-const workoutLink = (workout) => {
-  if (!workout) return null
-  if (!workout.configurable) return `/workout/${workout.id}`
-  const duration = workout.baseDuration ?? workout.duration
-  const intensity = (workout.difficulty || 'Intermediate').toLowerCase()
-  return `/workout/${workout.id}?duration=${duration}&intensity=${intensity}`
-}
 
 function Schedule() {
   const [cardioChoices, setCardioChoices] = useState(() => readStored(STORAGE_KEY))
@@ -71,12 +62,12 @@ function Schedule() {
     })
 
   return (
-    <div className="schedule">
-      <div className="schedule-container">
-        <div className="schedule-header">
-          <Link to="/" className="back-link">← Back to Home</Link>
+    <div className="page schedule">
+      <div className="page-container">
+        <div className="page-header">
+          <Link to="/" className="back-link">← Home</Link>
           <h1>My Week</h1>
-          <p className="schedule-subtitle">
+          <p className="page-subtitle">
             Cardio Wednesday and Friday · Strength Tuesday, Thursday and Saturday
           </p>
         </div>
@@ -87,15 +78,16 @@ function Schedule() {
             const date = toISODate(weekDates[day.dayIndex])
             const choiceId = cardioChoices[day.dayIndex] ?? DEFAULT_CARDIO_OPTION
             const cardioChoice = day.type === 'cardio' ? getCardioOption(choiceId) : null
-            const workout = getWorkout(
+            const workout = getWorkoutById(
               day.type === 'cardio' ? cardioChoice.workoutId : day.workoutId
             )
-            const makeupWorkout = day.type === 'cardio' ? getWorkout(makeups[date]) : null
+            const makeupWorkout = day.type === 'cardio' ? getWorkoutById(makeups[date]) : null
+            const done = getHistoryForDate(date)
 
             return (
               <div
                 key={day.dayIndex}
-                className={`schedule-day schedule-day--${day.type}${isToday ? ' schedule-day--today' : ''}`}
+                className={`schedule-day schedule-day--${day.type}${isToday ? ' schedule-day--today' : ''}${done.length ? ' schedule-day--done' : ''}`}
                 style={{ animationDelay: `${index * 0.06}s` }}
               >
                 <div className="schedule-day-header">
@@ -104,6 +96,14 @@ function Schedule() {
                     ? <span className="schedule-today-badge">Today</span>
                     : <span className="schedule-date">{dayLabel(weekDates[day.dayIndex])}</span>}
                 </div>
+
+                {done.length > 0 && (
+                  <p className="schedule-done">
+                    {done.map((h, i) => (
+                      <span key={i} className="badge badge-done">✓ {h.name}{typeof h.averageRating === 'number' ? ` · ${h.averageRating}/5` : ''}</span>
+                    ))}
+                  </p>
+                )}
 
                 <p className="schedule-day-title">
                   {day.type === 'cardio' ? cardioChoice.label : day.title}
@@ -129,7 +129,7 @@ function Schedule() {
                 )}
 
                 {workout && (
-                  <Link to={workoutLink(workout)} className="btn btn-primary schedule-start">
+                  <Link to={workoutPath(workout)} className="btn btn-primary schedule-start">
                     Start {workout.name}
                   </Link>
                 )}
@@ -156,7 +156,7 @@ function Schedule() {
                     </div>
 
                     {makeupWorkout && (
-                      <Link to={workoutLink(makeupWorkout)} className="btn btn-secondary schedule-start">
+                      <Link to={workoutPath(makeupWorkout)} className="btn btn-secondary schedule-start">
                         Start {makeupWorkout.name}
                       </Link>
                     )}

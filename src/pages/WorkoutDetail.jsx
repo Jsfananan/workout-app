@@ -1,355 +1,271 @@
-import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { workouts, buildConfigurableExercises } from '../data/workouts'
-import Timer from '../components/Timer'
-import JillianTimer from '../components/JillianTimer'
+import { getWorkoutById, resolveWorkout, DEFAULT_SETS } from '../data/workouts'
+import { exerciseTranslations, instructionTranslations, workoutNameTranslations } from '../data/translations'
+import { useSettings, useStrings, RATING_LABELS_ES } from '../context/SettingsContext'
+import {
+  RATING_LABELS, toISODate,
+  getGeneratedWorkout, getLastRating, recordRating, addHistoryEntry,
+  getActiveSession, saveActiveSession, clearActiveSession, saveLastConfig
+} from '../utils/storage'
 import './WorkoutDetail.css'
 
-const exerciseTranslations = {
-  // Cardio - Beginner
-  "March in Place": "Marcha en el Lugar",
-  "Step Touch": "Paso y Toque",
-  "Rest": "Descanso",
-  "Modified Burpees": "Burpees Modificados",
-  "Standing Mountain Climbers": "Escaladores de Pie",
-  // Cardio - Intermediate/Advanced
-  "Jumping Jacks": "Saltos de Tijera",
-  "High Knees": "Rodillas Altas",
-  "Burpees": "Burpees",
-  "Mountain Climbers": "Escaladores de Montaña",
-  "Burpees with Push-up": "Burpees con Lagartija",
-  // Strength - Beginner
-  "Knee Push-ups": "Lagartijas de Rodillas",
-  "Chair Squats": "Sentadillas con Silla",
-  "Plank (Knees Down)": "Plancha (Rodillas Abajo)",
-  "Standing Lunges": "Desplantes de Pie",
-  // Strength - Intermediate
-  "Push-ups": "Lagartijas",
-  "Squats": "Sentadillas",
-  "Plank": "Plancha",
-  "Lunges": "Desplantes",
-  // Strength - Advanced
-  "Jump Squats": "Sentadillas con Salto",
-  "Plank with Shoulder Tap": "Plancha con Toque de Hombro",
-  "Jump Lunges": "Desplantes con Salto",
-  // Core
-  "Crunches": "Abdominales",
-  "Plank Hold": "Plancha",
-  "Bicycle Crunches": "Abdominales de Bicicleta",
-  "Bicycle Crunches (Slow)": "Abdominales de Bicicleta (Lento)",
-  "Russian Twists": "Giros Rusos",
-  "Seated Russian Twist": "Giro Ruso Sentado",
-  "Russian Twists (Feet Up)": "Giros Rusos (Pies Arriba)",
-  "Leg Raises": "Elevaciones de Piernas",
-  "Plank with Reach": "Plancha con Extensión",
-  // Running
-  "Warm-up Walk": "Caminata de Calentamiento",
-  "Run": "Correr",
-  "Walk": "Caminar",
-  "Cooldown Walk": "Caminata de Enfriamiento",
-  "Continuous Run": "Carrera Continua",
-  "Long Run": "Carrera Larga",
-  "Fast Run": "Carrera Rápida",
-  "Recovery Walk": "Caminata de Recuperación",
-  "Steady Run": "Carrera Estable",
-  "Easy Run": "Carrera Fácil",
-  "Tempo Run": "Carrera de Tempo",
-}
+// Phone-down workout screen.
+//
+// One exercise fills the screen. Read it, put the phone down, do the sets,
+// pick the phone up, tap Done, tap how hard it was, read the next one. There
+// is no timer and nothing moves on its own. Progress is saved after every tap
+// so closing the phone mid-workout loses nothing.
 
-const instructionTranslations = {
-  "March steadily, lifting knees to a comfortable height": "Marcha de forma estable, levantando las rodillas a una altura cómoda",
-  "Step side to side, touching feet together as you go": "Da pasos de lado a lado, juntando los pies al moverte",
-  "Take a quick breather": "Toma un respiro rápido",
-  "Step back to plank (no jump), step forward, and stand. Add a small hop optional.": "Da un paso atrás a plancha (sin salto), paso adelante y de pie. Pequeño salto opcional.",
-  "Stand and drive knees up toward chest one at a time, at a steady pace": "De pie, lleva las rodillas al pecho una a la vez, a un ritmo constante",
-  "Jump your feet apart while raising your arms overhead, then return to start": "Salta separando los pies mientras levantas los brazos, luego regresa",
-  "Run in place, bringing your knees up toward your chest": "Corre en el lugar, llevando las rodillas hacia el pecho",
-  "Squat down, jump back into plank, do a push-up, jump forward, and jump up": "Agáchate, salta a plancha, haz una lagartija, salta adelante y salta arriba",
-  "In plank position, alternate bringing your knees to your chest": "En posición de plancha, alterna llevando las rodillas al pecho",
-  "Explosive jumping jacks; land softly": "Saltos de tijera explosivos; aterriza suavemente",
-  "Drive knees up quickly; aim for speed": "Lleva las rodillas arriba rápido; busca velocidad",
-  "Brief rest": "Descanso breve",
-  "Full burpee with a strict push-up at the bottom, then jump up": "Burpee completo con lagartija estricta abajo, luego salta",
-  "Fast pace; keep hips low and core tight": "Ritmo rápido; mantén las caderas bajas y el abdomen apretado",
-  "Push-ups with knees on the floor; keep your back straight": "Lagartijas con las rodillas en el piso; mantén la espalda recta",
-  "Lower toward a chair, tap and stand; or bodyweight squats to 90 degrees": "Baja hacia una silla, toca y levántate; o sentadillas a 90 grados",
-  "Forearm or high plank with knees on the ground; engage core": "Plancha de antebrazos o alta con rodillas en el piso; activa el abdomen",
-  "Step forward into a lunge, or do stationary lunges; alternate legs": "Da un paso adelante en desplante, o haz desplantes estacionarios; alterna piernas",
-  "Take a breather": "Toma un respiro",
-  "Lower your body until your chest nearly touches the floor, then push back up": "Baja el cuerpo hasta que el pecho casi toque el piso, luego sube",
-  "Lower your body as if sitting in a chair, keeping your knees behind your toes": "Baja como si te sentaras en una silla, manteniendo las rodillas detrás de los dedos",
-  "Hold your body in a straight line, engaging your core": "Mantén el cuerpo en línea recta, activando el abdomen",
-  "Step forward into a lunge, alternating legs": "Da un paso adelante en desplante, alternando piernas",
-  "Hands close (diamond) or deficit push-ups for extra range": "Manos juntas (diamante) o lagartijas con déficit para más rango",
-  "Squat down then explode up into a jump; land softly": "Agáchate y explota hacia arriba en un salto; aterriza suavemente",
-  "High plank; tap opposite shoulder while keeping hips steady": "Plancha alta; toca el hombro opuesto manteniendo las caderas estables",
-  "Alternating jump lunges; stay low and switch legs in the air": "Desplantes con salto alternados; mantente bajo y cambia piernas en el aire",
-  "Lift your shoulders off the ground; support your head lightly with your hands": "Levanta los hombros del piso; apoya la cabeza ligeramente con las manos",
-  "Forearm or high plank with knees on the ground; keep your back flat": "Plancha de antebrazos o alta con rodillas en el piso; mantén la espalda plana",
-  "Alternate elbow to knee in a slow, controlled cycling motion": "Alterna codo a rodilla en un movimiento de pedaleo lento y controlado",
-  "Sit with knees bent, feet on floor; rotate your torso side to side": "Siéntate con rodillas dobladas, pies en el piso; gira el torso de lado a lado",
-  "Lift your shoulders off the ground, engaging your abs": "Levanta los hombros del piso, activando los abdominales",
-  "Hold plank position, keeping your body straight": "Mantén la posición de plancha, con el cuerpo recto",
-  "Alternate bringing opposite elbow to knee in a cycling motion": "Alterna llevando el codo opuesto a la rodilla en movimiento de pedaleo",
-  "Sit and rotate your torso side to side": "Siéntate y gira el torso de lado a lado",
-  "Quick rest": "Descanso rápido",
-  "Lie on your back; raise and lower straight legs without letting them touch the floor": "Acuéstate boca arriba; sube y baja las piernas rectas sin tocar el piso",
-  "High plank; reach one arm forward, then the other; keep hips still": "Plancha alta; extiende un brazo al frente, luego el otro; mantén las caderas quietas",
-  "Fast, controlled cycling; extend the non-working leg fully": "Pedaleo rápido y controlado; extiende completamente la pierna que no trabaja",
-  "Feet off the floor; rotate torso and touch floor side to side": "Pies fuera del piso; gira el torso y toca el piso de lado a lado",
-  "Easy 5-minute warmup walk to prepare your body": "Caminata fácil de 5 minutos para preparar tu cuerpo",
-  "Run at easy pace - you should be able to hold a conversation": "Corre a paso fácil - deberías poder mantener una conversación",
-  "Recovery walk": "Caminata de recuperación",
-  "Run at easy pace": "Corre a paso fácil",
-  "Easy 5-minute cooldown walk": "Caminata fácil de 5 minutos para enfriar",
-  "Easy 5-minute warmup walk": "Caminata fácil de 5 minutos para calentar",
-  "Run continuously at easy pace. You should be able to speak in full sentences.": "Corre continuamente a paso fácil. Deberías poder hablar en oraciones completas.",
-  "Run at easy, conversational pace. Focus on maintaining steady rhythm. If running over 90 minutes, consider hydration and fuel.": "Corre a paso fácil y conversacional. Concéntrate en mantener un ritmo constante. Si corres más de 90 minutos, considera hidratación y combustible.",
-  "Walk at 3.0-3.5 mph for 5 minutes": "Camina a 3.0-3.5 mph por 5 minutos",
-  "Run at 6.5-7.5 mph (comfortably hard pace)": "Corre a 6.5-7.5 mph (ritmo cómodamente fuerte)",
-  "Walk at 3.0-3.5 mph to recover": "Camina a 3.0-3.5 mph para recuperarte",
-  "Run at 6.5-7.5 mph": "Corre a 6.5-7.5 mph",
-  "Run at 5.0-6.0 mph. Maintain steady, comfortable pace.": "Corre a 5.0-6.0 mph. Mantén un ritmo constante y cómodo.",
-  "Run at easy pace for 10 minutes": "Corre a paso fácil por 10 minutos",
-  "Run at tempo pace (comfortably hard - can say a few words) for 30 minutes": "Corre a ritmo tempo (cómodamente fuerte - puedes decir pocas palabras) por 30 minutos",
-}
+const PHASE = { exercise: 'exercise', rate: 'rate', done: 'done' }
 
-const workoutNameTranslations = {
-  "Quick Cardio Blast": "Cardio Rápido",
-  "Full Body Strength": "Fuerza de Cuerpo Completo",
-  "Core Crusher": "Destructor de Abdomen",
-  "5K Training Run": "Entrenamiento de 5K",
-  "5K Continuous Run": "Carrera Continua de 5K",
-  "Half Marathon Long Run": "Carrera Larga de Medio Maratón",
-  "Treadmill Interval": "Intervalos en Caminadora",
-  "Treadmill Steady State": "Caminadora Ritmo Constante",
-  "Half Marathon Tempo Run": "Carrera Tempo de Medio Maratón",
+function loadWorkout(id, search) {
+  if (id === 'generated') return getGeneratedWorkout()
+  const base = getWorkoutById(parseInt(id, 10))
+  if (!base) return null
+  return resolveWorkout(base, {
+    sets: parseInt(search.get('sets'), 10) || DEFAULT_SETS,
+    intensity: search.get('intensity') || undefined
+  })
 }
 
 function WorkoutDetail() {
   const { id } = useParams()
   const [search] = useSearchParams()
-  const [workout, setWorkout] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
-  const [isActive, setIsActive] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(0)
-  const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem('workoutLanguage')
-    return saved || 'en'
-  })
-  const [useJillianTimer, setUseJillianTimer] = useState(() => {
-    const saved = localStorage.getItem('useJillianTimer')
-    return saved ? JSON.parse(saved) : false
-  })
-
-  useEffect(() => {
-    localStorage.setItem('workoutLanguage', language)
-  }, [language])
-
-  useEffect(() => {
-    localStorage.setItem('useJillianTimer', JSON.stringify(useJillianTimer))
-  }, [useJillianTimer])
-
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { language, setLanguage } = useSettings()
+  const t = useStrings()
   const isEs = language === 'es'
+
+  const workout = useMemo(() => loadWorkout(id, search), [id, search])
+  const sessionKey = workout ? `${workout.id}|${workout.sets ?? ''}|${workout.intensity}` : null
+
+  const freshSession = () => ({
+    key: sessionKey,
+    workoutName: workout?.name,
+    path: `${location.pathname}${location.search}`,
+    index: 0,
+    phase: PHASE.exercise,
+    results: [],
+    startedAt: new Date().toISOString()
+  })
+
+  // Restore an in-progress session for this exact workout; otherwise start fresh.
+  const [session, setSession] = useState(() => {
+    const active = getActiveSession()
+    if (active && active.key === sessionKey) return active
+    return freshSession()
+  })
+  const [resumed] = useState(() => getActiveSession()?.key === sessionKey && (getActiveSession()?.index > 0))
+  const [otherSession, setOtherSession] = useState(() => {
+    const active = getActiveSession()
+    return active && active.key !== sessionKey && active.phase !== PHASE.done ? active : null
+  })
+
+  useEffect(() => {
+    if (!sessionKey) return
+    if (session.phase === PHASE.done) return
+    if (otherSession) return
+    saveActiveSession(session)
+  }, [session, sessionKey, otherSession])
+
+  useEffect(() => {
+    if (workout && workout.id !== 'generated') {
+      saveLastConfig(workout.id, { sets: workout.sets, intensity: workout.intensity })
+    }
+  }, [workout])
+
   const tName = useCallback((name) => isEs ? (exerciseTranslations[name] || name) : name, [isEs])
   const tInstructions = useCallback((text) => isEs ? (instructionTranslations[text] || text) : text, [isEs])
   const tWorkout = useCallback((name) => isEs ? (workoutNameTranslations[name] || name) : name, [isEs])
+  const ratingLabels = isEs ? RATING_LABELS_ES : RATING_LABELS
 
-  useEffect(() => {
-    const foundWorkout = workouts.find(w => w.id === parseInt(id))
-    setWorkout(foundWorkout)
-    setLoading(false)
-  }, [id])
-
-  const resolvedWorkout = useMemo(() => {
-    if (!workout) return null
-    if (workout.configurable && workout.exercisesByIntensity) {
-      const duration = parseInt(search.get('duration'), 10) || workout.baseDuration || workout.duration
-      const intensity = search.get('intensity') || workout.difficulty?.toLowerCase() || 'intermediate'
-      const exercises = buildConfigurableExercises(workout, duration, intensity)
-      if (exercises && exercises.length > 0) {
-        return { ...workout, exercises, duration }
-      }
-    }
-    return workout
-  }, [workout, search])
-
-  const displayWorkout = resolvedWorkout || workout
-
-  useEffect(() => {
-    if (displayWorkout && displayWorkout.exercises && displayWorkout.exercises.length > 0) {
-      setTimeRemaining(displayWorkout.exercises[0].duration)
-    }
-  }, [displayWorkout])
-
-  if (loading) {
+  if (!workout || !workout.exercises?.length) {
     return (
-      <div className="workout-detail">
-        <div className="workout-detail-container">
-          <p>{isEs ? 'Cargando entrenamiento...' : 'Loading workout...'}</p>
+      <div className="page">
+        <div className="page-container page-container--narrow">
+          <p>{t.notFound}</p>
+          <Link to="/workouts" className="back-link">{t.backWorkouts}</Link>
         </div>
       </div>
     )
   }
 
-  if (!workout || !displayWorkout || !displayWorkout.exercises || displayWorkout.exercises.length === 0) {
-    return (
-      <div className="workout-detail">
-        <div className="workout-detail-container">
-          <p>{isEs ? 'Entrenamiento no encontrado' : 'Workout not found'}</p>
-          <Link to="/workouts">{isEs ? '← Volver a Entrenamientos' : '← Back to Workouts'}</Link>
-        </div>
+  const exercises = workout.exercises
+  const isSets = workout.mode === 'sets'
+  const { index, phase, results } = session
+  const current = exercises[index]
+  const next = exercises[index + 1]
+  const lastRating = isSets && current ? getLastRating(current.name) : null
+
+  const advance = (result) => {
+    const nextResults = [...results, result]
+    const last = index >= exercises.length - 1
+    if (last) {
+      finish(nextResults)
+    } else {
+      setSession(s => ({ ...s, index: index + 1, phase: PHASE.exercise, results: nextResults }))
+    }
+  }
+
+  const finish = (finalResults) => {
+    const rated = finalResults.filter(r => typeof r.rating === 'number')
+    const avg = rated.length ? rated.reduce((s, r) => s + r.rating, 0) / rated.length : null
+    addHistoryEntry({
+      date: toISODate(),
+      completedAt: new Date().toISOString(),
+      workoutId: workout.id,
+      name: workout.name,
+      type: workout.type,
+      intensity: workout.intensity,
+      sets: workout.sets ?? null,
+      minutes: workout.minutes,
+      exercises: finalResults,
+      averageRating: avg === null ? null : Math.round(avg * 10) / 10
+    })
+    clearActiveSession()
+    setSession(s => ({ ...s, phase: PHASE.done, results: finalResults, averageRating: avg }))
+  }
+
+  const handleDone = () => {
+    if (isSets) {
+      setSession(s => ({ ...s, phase: PHASE.rate }))
+    } else {
+      advance({ name: current.name, rating: null, skipped: false })
+    }
+  }
+
+  const handleSkip = () => advance({ name: current.name, rating: null, skipped: true })
+
+  const handleRate = (rating) => {
+    if (typeof rating === 'number') recordRating(current.name, rating)
+    advance({ name: current.name, rating: typeof rating === 'number' ? rating : null, skipped: false })
+  }
+
+  const restart = () => {
+    clearActiveSession()
+    setSession(freshSession())
+  }
+
+  const setsLine = isSets
+    ? `${t.sets(current?.sets ?? workout.sets)} · ${t.perSet(current?.seconds ?? 45)}`
+    : t.minutes(Math.max(1, Math.round((current?.duration ?? 60) / 60)))
+
+  // ---- Unfinished-other-workout banner ------------------------------------
+  const banner = otherSession && (
+    <div className="session-banner">
+      <p>{t.unfinished}: <strong>{tWorkout(otherSession.workoutName || '')}</strong></p>
+      <div className="session-banner-actions">
+        <button className="btn btn-primary" onClick={() => navigate(otherSession.path || '/')}>{t.resume}</button>
+        <button className="btn btn-quiet" onClick={() => { clearActiveSession(); setOtherSession(null) }}>{t.discard}</button>
       </div>
-    )
-  }
+    </div>
+  )
 
-  const exercises = displayWorkout.exercises
-  const currentExercise = exercises[currentExerciseIndex]
-  const progress = ((currentExerciseIndex + 1) / exercises.length) * 100
-
-  const handleNext = () => {
-    setIsActive(false)
-    if (currentExerciseIndex < exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1)
-      setTimeRemaining(exercises[currentExerciseIndex + 1].duration)
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentExerciseIndex > 0) {
-      setCurrentExerciseIndex(currentExerciseIndex - 1)
-      setTimeRemaining(exercises[currentExerciseIndex - 1].duration)
-      setIsActive(false)
-    }
-  }
-
-  const handleComplete = () => {
-    alert(isEs ? '¡Entrenamiento completado! ¡Buen trabajo!' : 'Workout completed! Great job!')
-  }
-
-  return (
-    <div className="workout-detail">
-      <div className="workout-detail-container">
-        <div className="workout-detail-header">
-          <Link to="/workouts" className="back-link">{isEs ? '← Volver a Entrenamientos' : '← Back to Workouts'}</Link>
-          <h1>{tWorkout(displayWorkout.name)}</h1>
-          <div className="workout-meta">
-            <span className="workout-duration-badge">{displayWorkout.duration} min</span>
-            <span className={`difficulty-badge difficulty-${displayWorkout.configurable ? (search.get('intensity') || 'intermediate') : (displayWorkout.difficulty || 'intermediate').toLowerCase()}`}>
-              {(displayWorkout.configurable ? (search.get('intensity') || 'intermediate') : (displayWorkout.difficulty || 'intermediate').toLowerCase()).replace(/^\w/, c => c.toUpperCase())}
-            </span>
-            {displayWorkout.type && (
-              <span className="workout-type-badge">{displayWorkout.type}</span>
+  // ---- Done screen --------------------------------------------------------
+  if (phase === PHASE.done) {
+    const avg = session.averageRating
+    const nudge = avg === null || avg === undefined ? null : avg <= 1.5 ? t.nudgeEasy : avg >= 4.2 ? t.nudgeHard : t.nudgeGood
+    return (
+      <div className="page session">
+        <div className="page-container page-container--narrow">
+          <div className="session-done">
+            <div className="session-done-mark">✓</div>
+            <h1>{t.finished}</h1>
+            <p className="page-subtitle">{tWorkout(workout.name)} · {t.finishedSub(results.filter(r => !r.skipped).length, workout.minutes)}</p>
+            {avg !== null && avg !== undefined && (
+              <p className="session-avg">{t.avgEffort}: <strong>{avg.toFixed(1)} / 5</strong></p>
             )}
-          </div>
-          <div className="timer-toggle">
-            <label className="timer-toggle-label">
-              <input
-                type="checkbox"
-                checked={useJillianTimer}
-                onChange={(e) => setUseJillianTimer(e.target.checked)}
-              />
-              <span>{isEs ? 'Usar Temporizador de Jillian' : "Use Jillian's Timer Style"}</span>
-            </label>
-          </div>
-          <div className="timer-toggle">
-            <button
-              className={`btn-language ${isEs ? 'active' : ''}`}
-              onClick={() => setLanguage(isEs ? 'en' : 'es')}
-            >
-              {isEs ? '🇺🇸 English' : '🇲🇽 Español'}
-            </button>
-          </div>
-        </div>
+            {nudge && <p className="session-nudge">{nudge}</p>}
 
-        <div className="workout-progress">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-          <p className="progress-text">
-            {isEs ? 'Ejercicio' : 'Exercise'} {currentExerciseIndex + 1} {isEs ? 'de' : 'of'} {exercises.length}
-          </p>
-        </div>
+            <ul className="session-results">
+              {results.map((r, i) => (
+                <li key={i} className={r.skipped ? 'skipped' : ''}>
+                  <span>{tName(r.name)}</span>
+                  <span className="session-result-rating">
+                    {r.skipped ? t.skipped : typeof r.rating === 'number' ? `${r.rating} · ${ratingLabels[r.rating]}` : '—'}
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-        <div className="exercise-display">
-          <div className="exercise-card">
-            <h2>{tName(currentExercise.name)}</h2>
-            <p className="exercise-instructions">{tInstructions(currentExercise.instructions)}</p>
-            
-            {useJillianTimer ? (
-              <JillianTimer
-                duration={currentExercise.duration}
-                isActive={isActive}
-                onComplete={handleNext}
-                timeRemaining={timeRemaining}
-                setTimeRemaining={setTimeRemaining}
-              />
-            ) : (
-              <Timer
-                duration={currentExercise.duration}
-                isActive={isActive}
-                onComplete={handleNext}
-                timeRemaining={timeRemaining}
-                setTimeRemaining={setTimeRemaining}
-              />
-            )}
-
-            <div className="exercise-controls">
-              <button 
-                onClick={() => setIsActive(!isActive)}
-                className="btn btn-primary"
-              >
-                {isActive ? (isEs ? 'Pausar' : 'Pause') : (isEs ? 'Iniciar' : 'Start')}
-              </button>
-              {currentExerciseIndex > 0 && (
-                <button 
-                  onClick={handlePrevious}
-                  className="btn btn-secondary"
-                >
-                  {isEs ? 'Anterior' : 'Previous'}
-                </button>
-              )}
-              {currentExerciseIndex < exercises.length - 1 ? (
-                <button 
-                  onClick={handleNext}
-                  className="btn btn-primary"
-                >
-                  {isEs ? 'Siguiente Ejercicio' : 'Next Exercise'}
-                </button>
-              ) : (
-                <button 
-                  onClick={handleComplete}
-                  className="btn btn-success"
-                >
-                  {isEs ? 'Completar Entrenamiento' : 'Complete Workout'}
-                </button>
-              )}
+            <div className="session-done-actions">
+              <Link to="/schedule" className="btn btn-primary">{t.backToWeek}</Link>
+              <button className="btn btn-secondary" onClick={restart}>{t.again}</button>
             </div>
           </div>
         </div>
+      </div>
+    )
+  }
 
-        <div className="exercise-list">
-          <h3>{isEs ? 'Lista de Ejercicios' : 'Exercise List'}</h3>
-          <ul>
-            {exercises.map((exercise, index) => (
-              <li 
-                key={index}
-                className={index === currentExerciseIndex ? 'active' : ''}
-                onClick={() => {
-                  setCurrentExerciseIndex(index)
-                  setTimeRemaining(exercise.duration)
-                  setIsActive(false)
-                }}
-              >
-                <span className="exercise-list-name">{tName(exercise.name)}</span>
-                <span className="exercise-list-duration">{exercise.duration}s</span>
-              </li>
-            ))}
-          </ul>
+  // ---- Rating screen ------------------------------------------------------
+  if (phase === PHASE.rate) {
+    return (
+      <div className="page session">
+        <div className="page-container page-container--narrow">
+          <div className="session-rate">
+            <p className="session-progress-text">{tName(current.name)}</p>
+            <h1>{t.howHard}</h1>
+            <div className="rating-grid">
+              {ratingLabels.map((label, value) => (
+                <button key={value} type="button" className={`rating-btn rating-${value}`} onClick={() => handleRate(value)}>
+                  <span className="rating-value">{value}</span>
+                  <span className="rating-label">{label}</span>
+                </button>
+              ))}
+            </div>
+            <button className="btn btn-quiet" onClick={() => handleRate(null)}>{t.skipRating}</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ---- Exercise screen ----------------------------------------------------
+  const progress = (index / exercises.length) * 100
+  return (
+    <div className="page session">
+      <div className="page-container page-container--narrow">
+        <div className="session-top">
+          <Link to="/schedule" className="back-link">{t.backHome}</Link>
+          <button className="btn-language" onClick={() => setLanguage(isEs ? 'en' : 'es')}>{t.language}</button>
+        </div>
+
+        {banner}
+
+        <div className="session-progress">
+          <div className="progress-bar"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
+          <p className="session-progress-text">
+            {tWorkout(workout.name)} · {isSets ? t.exerciseOf(index + 1, exercises.length) : t.stepOf(index + 1, exercises.length)}
+            {resumed && index > 0 && <span className="session-resumed"> · {t.resumeTitle}</span>}
+          </p>
+        </div>
+
+        <div className={`exercise-card exercise-card--${current.slot || 'main'}`}>
+          {current.slot && current.slot !== 'main' && (
+            <span className="exercise-slot">{current.slot}</span>
+          )}
+          <h1 className="exercise-name">{tName(current.name)}</h1>
+          <p className="exercise-sets">{setsLine}</p>
+          <p className="exercise-instructions">{tInstructions(current.instructions)}</p>
+          {lastRating && (
+            <p className="exercise-last">
+              {t.lastTime}: <strong>{lastRating.rating} · {ratingLabels[lastRating.rating]}</strong>
+            </p>
+          )}
+        </div>
+
+        <button className="btn btn-primary btn-done" onClick={handleDone}>
+          {t.done} ✓
+        </button>
+
+        <div className="session-footer">
+          {next
+            ? <p className="session-next">{t.nextUp}: <strong>{tName(next.name)}</strong></p>
+            : <p className="session-next">&nbsp;</p>}
+          <button className="btn btn-quiet" onClick={handleSkip}>{t.skip}</button>
         </div>
       </div>
     </div>

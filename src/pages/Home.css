@@ -3,109 +3,92 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  background: linear-gradient(135deg, #fde8e0 0%, #fad4c8 50%, #f8c4b4 100%);
+  padding: 1.5rem 1rem;
   animation: fadeIn 0.5s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .home-container {
-  max-width: 1200px;
+  max-width: 640px;
   width: 100%;
   text-align: center;
 }
 
+.home-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
 .home-title {
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   color: #4a3728;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-weight: 700;
-  animation: slideUp 0.6s ease 0.1s both;
+  animation: fadeInUp 0.6s ease 0.1s both;
 }
 
-.home-subtitle {
-  font-size: 1.5rem;
+.today-card {
+  background: white;
+  border-radius: 24px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 8px 30px rgba(216, 144, 128, 0.25);
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.6s ease 0.2s both;
+  text-align: left;
+}
+
+.today-card--rest {
+  background: #faf5f2;
+}
+
+.today-label {
+  color: #b85c50;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+}
+
+.today-card h2 {
+  font-size: 2rem;
+  color: #1f2937;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.today-note {
   color: #5c4535;
-  margin-bottom: 3rem;
-  animation: slideUp 0.6s ease 0.2s both;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.today-done {
+  margin-top: 0.75rem;
+  color: #047857;
+  font-weight: 600;
+}
+
+.today-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.today-actions .btn {
+  display: block;
 }
 
 .home-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: slideUp 0.6s ease 0.3s both;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  animation: fadeInUp 0.6s ease 0.3s both;
 }
 
-.btn {
-  display: inline-block;
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 50px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
+.home-actions .btn {
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
 }
 
-.btn-primary {
-  background: #F54D4D;
-  color: white;
-  box-shadow: 0 4px 15px rgba(245, 77, 77, 0.35);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  background: #e04545;
-  box-shadow: 0 6px 20px rgba(245, 77, 77, 0.4);
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.6);
-  color: #5c4033;
-  border: 2px solid #d49080;
-}
-
-.btn-secondary:hover {
-  background: white;
-  color: #b85c50;
-  border-color: #b85c50;
-}
-
-.btn-success {
-  background: #10b981;
-  color: white;
-}
-
-.btn-success:hover {
-  background: #059669;
-  transform: translateY(-2px);
-}
-
-@media (max-width: 768px) {
-  .home-title {
-    font-size: 2.5rem;
-  }
-  
-  .home-subtitle {
-    font-size: 1.2rem;
-  }
+@media (max-width: 480px) {
+  .home-title { font-size: 2rem; }
+  .today-card h2 { font-size: 1.6rem; }
 }

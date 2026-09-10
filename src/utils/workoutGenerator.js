@@ -1,459 +1,221 @@
-import { exercises, getExerciseById } from '../data/exercises.js'
+import { exercises as allExercises } from '../data/exercises.js'
 
-// Generate unique workout ID
-function generateWorkoutId() {
-  return 'workout_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+// Set-based workout generator.
+//
+// A generated workout is a short warmup, a main block of exercises, and a
+// cooldown. Every main exercise is done for `sets` sets, off-phone; nothing is
+// timed. The main block follows the 3-2-1 rhythm (3 strength, 2 cardio, 1 core)
+// for mixed workouts, and a type-specific rhythm otherwise.
+
+export const DURATION_OPTIONS = [10, 20, 30, 45]
+export const FITNESS_LEVELS = ['beginner', 'intermediate', 'advanced']
+export const TARGET_AREAS = ['total_body', 'upper_body', 'lower_body', 'abs', 'booty', 'arms', 'legs']
+export const WORKOUT_TYPES = ['mixed', 'hiit', 'strength', 'kickboxing', 'yoga', 'low_impact']
+export const EQUIPMENT = ['none', 'dumbbells', 'bands', 'bench']
+
+export const DEFAULT_INPUTS = {
+  duration: 20,
+  sets: 4,
+  fitness_level: 'intermediate',
+  target_area: 'total_body',
+  workout_type: 'mixed',
+  equipment_available: ['none'],
+  banned_exercises: []
 }
 
-// Filter exercises based on user inputs
-export function filterExercises(userInputs) {
-  let pool = [...exercises]
-  
-  // Filter by equipment
-  pool = pool.filter(ex => {
-    // Exercise requires equipment that user has, OR exercise requires no equipment
-    return ex.equipment_required.some(eq => userInputs.equipment_available.includes(eq)) ||
-           ex.equipment_required.includes('none') ||
-           ex.equipment_required.length === 0
-  })
-  
-  // Filter by fitness level
-  pool = pool.filter(ex => ex.difficulty_level === userInputs.fitness_level)
-  
-  // Filter by target area
-  if (userInputs.target_area !== 'total_body') {
-    const targetMap = {
-      'upper_body': ['chest', 'shoulders', 'triceps', 'back', 'biceps'],
-      'lower_body': ['legs', 'glutes'],
-      'abs': ['abs', 'plank', 'yoga_core'],
-      'booty': ['glutes'],
-      'arms': ['biceps', 'triceps', 'shoulders'],
-      'legs': ['legs', 'glutes']
-    }
-    
-    const targetSubcategories = targetMap[userInputs.target_area] || []
-    pool = pool.filter(ex => 
-      targetSubcategories.some(sub => ex.subcategory.includes(sub))
-    )
-  }
-  
-  // Remove banned exercises
-  if (userInputs.banned_exercises && userInputs.banned_exercises.length > 0) {
-    pool = pool.filter(ex => !userInputs.banned_exercises.includes(ex.exercise_id))
-  }
-  
-  // Filter by workout type
-  if (userInputs.workout_type === 'low_impact') {
-    pool = pool.filter(ex => ex.is_low_impact === true)
-  } else if (userInputs.workout_type === 'hiit') {
-    pool = pool.filter(ex => 
-      ex.category.includes('cardio') || 
-      ex.category === 'kickboxing' ||
-      ex.category === 'compound'
-    )
-  } else if (userInputs.workout_type === 'strength') {
-    pool = pool.filter(ex => ex.category.includes('strength'))
-  } else if (userInputs.workout_type === 'kickboxing') {
-    pool = pool.filter(ex => ex.category === 'kickboxing')
-  } else if (userInputs.workout_type === 'yoga') {
-    pool = pool.filter(ex => 
-      ex.category === 'yoga' || 
-      ex.subcategory === 'yoga_core' ||
-      ex.name.toLowerCase().includes('pose')
-    )
-  }
-  
-  return pool
+// Seconds of work per set plus the breather after it, used only to size the
+// workout to the requested duration.
+const SET_SECONDS = 45
+const TRANSITION_SECONDS = 20
+const WARMUP_COUNT = 2
+const COOLDOWN_COUNT = 2
+
+// Which exercise "slots" the main block cycles through, per workout type.
+const SLOT_RHYTHM = {
+  mixed: ['strength', 'strength', 'strength', 'cardio', 'cardio', 'core'],
+  low_impact: ['strength', 'strength', 'strength', 'cardio', 'cardio', 'core'],
+  strength: ['strength', 'strength', 'strength', 'core'],
+  hiit: ['cardio', 'cardio', 'cardio', 'core'],
+  kickboxing: ['kickboxing', 'kickboxing', 'kickboxing', 'core'],
+  yoga: ['yoga', 'yoga', 'core']
 }
 
-// Select exercises from pool ensuring variety
-function selectExercises(pool, count, duration, usedExerciseIds = []) {
-  let selected = []
-  let available = pool.filter(ex => !usedExerciseIds.includes(ex.exercise_id))
-  
-  // If we don't have enough exercises, allow some reuse but try to avoid it
-  if (available.length < count) {
-    available = [...pool] // Allow reuse if necessary
-  }
-  
-  // Shuffle array for randomness
-  available = shuffleArray([...available])
-  
-  for (let i = 0; i < count && available.length > 0; i++) {
-    // Find an exercise we haven't used yet
-    let exercise = available.find(ex => !usedExerciseIds.includes(ex.exercise_id))
-    
-    // If all exercises are used, just pick any
-    if (!exercise) {
-      exercise = available[0]
-    }
-    
-    selected.push({
-      exercise_id: exercise.exercise_id,
-      duration: duration
-    })
-    
-    usedExerciseIds.push(exercise.exercise_id)
-    
-    // Remove from available pool
-    available = available.filter(ex => ex.exercise_id !== exercise.exercise_id)
-  }
-  
-  return { selected, usedExerciseIds }
+const TARGET_SUBCATEGORIES = {
+  upper_body: ['chest', 'shoulders', 'triceps', 'back', 'biceps'],
+  lower_body: ['legs', 'glutes'],
+  abs: ['abs', 'plank', 'yoga_core'],
+  booty: ['glutes'],
+  arms: ['biceps', 'triceps', 'shoulders'],
+  legs: ['legs', 'glutes']
 }
 
-// Shuffle array for randomness
-function shuffleArray(array) {
-  const shuffled = [...array]
-  for (let i = shuffled.length - 1; i > 0; i--) {
+const SLOT_MATCHERS = {
+  strength: ex => ex.category === 'strength_upper' || ex.category === 'strength_lower' || ex.category === 'compound',
+  cardio: ex => ex.category.startsWith('cardio') || ex.category === 'plyo' || ex.category === 'kickboxing',
+  core: ex => ex.category === 'strength_core',
+  kickboxing: ex => ex.category === 'kickboxing',
+  yoga: ex => ex.category === 'yoga' || ex.subcategory === 'yoga_core' || (ex.is_low_impact && ex.category === 'strength_core')
+}
+
+const WARMUP_NAMES = ['march in place', 'jog in place', 'butt kicks', 'jumping jacks', 'high knees', 'arm circles']
+const COOLDOWN_NAMES = ['cobra', 'downward dog', 'child', 'sun salutation', 'cat-cow', 'stretch']
+
+const levelsUpTo = (level) => FITNESS_LEVELS.slice(0, FITNESS_LEVELS.indexOf(level) + 1)
+
+const hasEquipment = (ex, available) =>
+  ex.equipment_required.length === 0 ||
+  ex.equipment_required.every(eq => eq === 'none' || available.includes(eq))
+
+function shuffle(list) {
+  const out = [...list]
+  for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    [out[i], out[j]] = [out[j], out[i]]
   }
-  return shuffled
+  return out
 }
 
-// Determine circuit count based on duration
-function getCircuitCount(duration) {
-  const circuitMap = {
-    10: 1,
-    20: 2,
-    30: 3,
-    45: 5
-  }
-  return circuitMap[duration] || 1
-}
-
-// Build a single circuit using 3-2-1 system
-function buildCircuit(circuitNumber, exercisePool, usedExerciseIds, targetArea, workoutType) {
-  let circuit = {
-    circuit_number: circuitNumber,
-    rounds: 1,
-    sections: []
-  }
-  
-  let currentUsedIds = [...usedExerciseIds]
-  
-  // STRENGTH SECTION (3 minutes)
-  let strengthPool = exercisePool.filter(ex => 
-    ex.category.includes('strength') && 
-    ex.category !== 'strength_core'
+// The base pool: right equipment, at or below the chosen level, not banned,
+// low-impact only when asked. Target area and workout type are applied per
+// slot so a "strength" workout can still get a cardio warmup, etc.
+export function basePool(inputs) {
+  const levels = levelsUpTo(inputs.fitness_level)
+  const banned = new Set(inputs.banned_exercises || [])
+  return allExercises.filter(ex =>
+    levels.includes(ex.difficulty_level) &&
+    hasEquipment(ex, inputs.equipment_available || []) &&
+    !banned.has(ex.exercise_id) &&
+    (inputs.workout_type !== 'low_impact' || ex.is_low_impact)
   )
-  
-  // For total_body workouts, rotate muscle groups across circuits
-  if (targetArea === 'total_body') {
-    const muscleGroups = ['upper', 'lower', 'core']
-    const groupIndex = (circuitNumber - 1) % 3
-    
-    if (groupIndex === 0) {
-      // Upper body focus
-      strengthPool = strengthPool.filter(ex => ex.category === 'strength_upper')
-    } else if (groupIndex === 1) {
-      // Lower body focus
-      strengthPool = strengthPool.filter(ex => ex.category === 'strength_lower')
-    } else {
-      // Core focus (but we'll do this in abs section, so do upper again)
-      strengthPool = strengthPool.filter(ex => ex.category === 'strength_upper')
-    }
+}
+
+// Ordered candidate pools for a slot, narrowest first. A later pool is only
+// used when every exercise in the earlier ones has already been used, so a
+// small category (beginner kickboxing has four moves) widens instead of
+// repeating.
+function slotPools(pool, slot, targetArea) {
+  const pools = []
+  const inSlot = pool.filter(SLOT_MATCHERS[slot])
+  // Target area shapes the strength slot only; cardio/core stay whole-body so
+  // an "arms" workout still has a heartbeat and a core finisher.
+  if (slot === 'strength' && targetArea !== 'total_body') {
+    const subs = TARGET_SUBCATEGORIES[targetArea] || []
+    pools.push(inSlot.filter(ex => subs.includes(ex.subcategory)))
   }
-  
-  if (strengthPool.length > 0) {
-    const { selected, usedExerciseIds: newUsedIds } = selectExercises(
-      strengthPool,
-      3, // 3 exercises at 60 seconds each = 3 minutes
-      60,
-      currentUsedIds
-    )
-    currentUsedIds = newUsedIds
-    
-    circuit.sections.push({
-      type: 'strength',
-      duration: 180,
-      exercises: selected
-    })
+  pools.push(inSlot)
+  if (slot === 'kickboxing') pools.push(pool.filter(SLOT_MATCHERS.cardio))
+  if (slot === 'yoga') pools.push(pool.filter(SLOT_MATCHERS.core))
+  pools.push(pool)
+  return pools
+}
+
+// Pick `count` exercises from `pool`, preferring ones not yet used, never
+// repeating within the same pick, falling back to reuse only when the pool is
+// genuinely too small. `used` tracks ids and names: the data has a few
+// same-named moves under different ids.
+function pick(pool, count, used) {
+  const isUsed = ex => used.has(ex.exercise_id) || used.has(ex.name)
+  const fresh = shuffle(pool.filter(ex => !isUsed(ex)))
+  const stale = shuffle(pool.filter(isUsed))
+  const chosen = []
+  for (const ex of [...fresh, ...stale]) {
+    if (chosen.length === count) break
+    if (chosen.some(c => c.name === ex.name)) continue
+    chosen.push(ex)
   }
-  
-  // CARDIO SECTION (2 minutes)
-  let cardioPool = exercisePool.filter(ex => 
-    ex.category.includes('cardio') || 
-    ex.category === 'kickboxing' ||
-    (ex.category === 'compound' && workoutType === 'hiit')
+  chosen.forEach(ex => { used.add(ex.exercise_id); used.add(ex.name) })
+  return chosen
+}
+
+function mainExerciseCount(duration, sets) {
+  const warmCool = (WARMUP_COUNT + COOLDOWN_COUNT) * (SET_SECONDS + TRANSITION_SECONDS)
+  const perExercise = sets * (SET_SECONDS + TRANSITION_SECONDS)
+  return Math.max(2, Math.round((duration * 60 - warmCool) / perExercise))
+}
+
+const toEntry = (ex, extra) => ({
+  exerciseId: ex.exercise_id,
+  name: ex.name,
+  instructions: ex.description,
+  seconds: SET_SECONDS,
+  ...extra
+})
+
+
+export function generateWorkout(userInputs = {}, options = {}) {
+  const inputs = { ...DEFAULT_INPUTS, ...userInputs }
+  const avoid = new Set(options.recentExerciseIds || [])
+  const pool = basePool(inputs)
+
+  if (pool.length < 6) {
+    throw new Error('Not enough exercises match those filters. Try a higher fitness level or more equipment.')
+  }
+
+  const rhythm = SLOT_RHYTHM[inputs.workout_type] || SLOT_RHYTHM.mixed
+  const count = mainExerciseCount(inputs.duration, inputs.sets)
+
+  // Main block: walk the rhythm, one pick per slot. If a slot has no
+  // candidates (e.g. an "abs" strength target on a beginner pool) borrow from
+  // the whole pool so the workout is never short.
+  // One shared "used" set so nothing repeats anywhere in the workout; ids from
+  // recent workouts start in it so consecutive workouts differ too.
+  const used = new Set(avoid)
+
+  // Picks in workout order so the gentle moves are still fresh for the warmup.
+  const firstFresh = (pools) => pools.find(list => list.some(ex => !used.has(ex.exercise_id) && !used.has(ex.name))) || pool
+
+  // Warmup: gentle cardio names first, then any low-impact cardio, then any cardio.
+  const gentle = pool.filter(ex => WARMUP_NAMES.some(n => ex.name.toLowerCase().includes(n)))
+  const easyCardio = pool.filter(ex => ex.is_low_impact && ex.category.startsWith('cardio'))
+  const warmup = pick(firstFresh([gentle, easyCardio, pool.filter(SLOT_MATCHERS.cardio)]), WARMUP_COUNT, used)
+    .map(ex => toEntry(ex, { sets: 1, slot: 'warmup' }))
+
+  const main = []
+  for (let i = 0; i < count; i++) {
+    const slot = rhythm[i % rhythm.length]
+    const [ex] = pick(firstFresh(slotPools(pool, slot, inputs.target_area)), 1, used)
+    if (ex) main.push(toEntry(ex, { sets: inputs.sets, slot }))
+  }
+
+  // Cooldown: yoga / stretch names first (any level), then low-impact core holds.
+  const stretches = allExercises.filter(ex =>
+    hasEquipment(ex, inputs.equipment_available || []) &&
+    (COOLDOWN_NAMES.some(n => ex.name.toLowerCase().includes(n)) ||
+      ex.category === 'yoga' || ex.subcategory === 'yoga_core')
   )
-  
-  if (cardioPool.length > 0) {
-    // 2 exercises at 60 seconds each, or 4 exercises at 30 seconds each
-    const exerciseCount = cardioPool.length >= 4 ? 4 : 2
-    const exerciseDuration = exerciseCount === 4 ? 30 : 60
-    
-    const { selected, usedExerciseIds: newUsedIds } = selectExercises(
-      cardioPool,
-      exerciseCount,
-      exerciseDuration,
-      currentUsedIds
-    )
-    currentUsedIds = newUsedIds
-    
-    circuit.sections.push({
-      type: 'cardio',
-      duration: 120,
-      exercises: selected
-    })
-  }
-  
-  // ABS SECTION (1 minute)
-  let absPool = exercisePool.filter(ex => 
-    ex.category === 'strength_core' ||
-    ex.subcategory === 'abs' ||
-    ex.subcategory === 'plank'
-  )
-  
-  if (absPool.length > 0) {
-    // 1 exercise at 60 seconds, or 2 exercises at 30 seconds each
-    const exerciseCount = absPool.length >= 2 ? 2 : 1
-    const exerciseDuration = exerciseCount === 2 ? 30 : 60
-    
-    const { selected, usedExerciseIds: newUsedIds } = selectExercises(
-      absPool,
-      exerciseCount,
-      exerciseDuration,
-      currentUsedIds
-    )
-    currentUsedIds = newUsedIds
-    
-    circuit.sections.push({
-      type: 'abs',
-      duration: 60,
-      exercises: selected
-    })
-  }
-  
-  return { circuit, usedExerciseIds: currentUsedIds }
-}
+  const holds = pool.filter(ex => ex.is_low_impact && SLOT_MATCHERS.core(ex))
+  const cooldown = pick(firstFresh([stretches, holds]), COOLDOWN_COUNT, used)
+    .map(ex => toEntry(ex, { sets: 1, slot: 'cooldown' }))
 
-// Get warmup exercises
-function getWarmupExercises(exercisePool) {
-  const warmupNames = [
-    'Butt Kicks',
-    'March in Place',
-    'Jog in Place',
-    'Jumping Jacks',
-    'High Knees'
-  ]
-  
-  let warmupPool = exercisePool.filter(ex => 
-    warmupNames.some(name => ex.name.toLowerCase().includes(name.toLowerCase())) ||
-    ex.is_low_impact === true && ex.category.includes('cardio')
-  )
-  
-  // Select 3-4 warmup exercises, 30 seconds each
-  const { selected } = selectExercises(warmupPool, 4, 30, [])
-  
-  return selected
-}
+  const exercises = [...warmup, ...main, ...cooldown]
+  const seconds = exercises.reduce((total, e) => total + e.sets * (e.seconds + TRANSITION_SECONDS), 0)
 
-// Get cooldown exercises
-function getCooldownExercises(exercisePool) {
-  const cooldownNames = [
-    'Cobra Pose',
-    'Downward Dog',
-    'Sun Salutations'
-  ]
-  
-  let cooldownPool = exercisePool.filter(ex => 
-    cooldownNames.some(name => ex.name.toLowerCase().includes(name.toLowerCase())) ||
-    (ex.is_low_impact === true && ex.category === 'yoga')
-  )
-  
-  // If no yoga exercises, use low-impact stretching movements
-  if (cooldownPool.length === 0) {
-    cooldownPool = exercisePool.filter(ex => 
-      ex.is_low_impact === true && 
-      (ex.category === 'strength_core' || ex.category === 'yoga')
-    )
-  }
-  
-  // Select 3-4 cooldown exercises, 30 seconds each
-  const { selected } = selectExercises(cooldownPool, 4, 30, [])
-  
-  return selected
-}
-
-// Calculate estimated calories burned
-export function calculateCalories(workout, userWeight = 150) {
-  let totalCalories = 0
-  
-  // Warmup calories
-  if (workout.warmup && workout.warmup.exercises) {
-    workout.warmup.exercises.forEach(exercise => {
-      const exerciseData = getExerciseById(exercise.exercise_id)
-      if (exerciseData) {
-        const minutes = exercise.duration / 60
-        totalCalories += exerciseData.calories_per_minute * minutes * (userWeight / 150)
-      }
-    })
-  }
-  
-  // Circuit calories
-  if (workout.circuits) {
-    workout.circuits.forEach(circuit => {
-      circuit.sections.forEach(section => {
-        section.exercises.forEach(exercise => {
-          const exerciseData = getExerciseById(exercise.exercise_id)
-          if (exerciseData) {
-            const minutes = exercise.duration / 60
-            totalCalories += exerciseData.calories_per_minute * minutes * (userWeight / 150)
-          }
-        })
-      })
-    })
-  }
-  
-  // Cooldown calories
-  if (workout.cooldown && workout.cooldown.exercises) {
-    workout.cooldown.exercises.forEach(exercise => {
-      const exerciseData = getExerciseById(exercise.exercise_id)
-      if (exerciseData) {
-        const minutes = exercise.duration / 60
-        totalCalories += exerciseData.calories_per_minute * minutes * (userWeight / 150)
-      }
-    })
-  }
-  
-  return Math.round(totalCalories)
-}
-
-// Track recent workouts to avoid exercise repetition
-let recentWorkoutExercises = []
-
-// Get exercises used in recent workouts
-function getRecentExerciseIds(count = 5) {
-  return recentWorkoutExercises.slice(-count).flat()
-}
-
-// Main workout generator function
-export function generateWorkout(userInputs, userWeight = 150) {
-  // Validate inputs
-  const defaultInputs = {
-    duration: 20,
-    fitness_level: 'intermediate',
-    target_area: 'total_body',
-    workout_type: 'mixed',
-    equipment_available: ['none'],
-    banned_exercises: []
-  }
-  
-  const inputs = { ...defaultInputs, ...userInputs }
-  
-  // Filter exercise pool
-  let exercisePool = filterExercises(inputs)
-  
-  if (exercisePool.length === 0) {
-    throw new Error('No exercises match your criteria. Please adjust your filters.')
-  }
-  
-  // Get recent exercise IDs to avoid repetition
-  const recentExerciseIds = getRecentExerciseIds(5)
-  
-  // Remove recent exercises from pool (but keep some available if pool is too small)
-  let availablePool = exercisePool.filter(ex => 
-    !recentExerciseIds.includes(ex.exercise_id)
-  )
-  
-  // If filtering out recent exercises leaves us with too few, use full pool
-  if (availablePool.length < 20) {
-    availablePool = exercisePool
-  }
-  
-  // Determine circuit count
-  const circuitCount = getCircuitCount(inputs.duration)
-  
-  // Generate workout structure
-  const workout = {
-    workout_id: generateWorkoutId(),
-    total_duration: inputs.duration,
-    structure: '3-2-1',
-    warmup: {
-      duration: 120,
-      exercises: []
-    },
-    circuits: [],
-    cooldown: {
-      duration: 120,
-      exercises: []
-    },
-    estimated_calories: 0
-  }
-  
-  // Build warmup
-  const warmupExercises = getWarmupExercises(availablePool)
-  workout.warmup.exercises = warmupExercises
-  
-  // Track all exercises used in this workout
-  let allUsedExerciseIds = warmupExercises.map(ex => ex.exercise_id)
-  
-  // Build circuits
-  for (let i = 1; i <= circuitCount; i++) {
-    const { circuit, usedExerciseIds } = buildCircuit(
-      i,
-      availablePool,
-      allUsedExerciseIds,
-      inputs.target_area,
-      inputs.workout_type
-    )
-    
-    workout.circuits.push(circuit)
-    allUsedExerciseIds = [...allUsedExerciseIds, ...usedExerciseIds]
-    
-    // Remove used exercises from available pool to ensure variety
-    availablePool = availablePool.filter(ex => 
-      !allUsedExerciseIds.includes(ex.exercise_id)
-    )
-    
-    // If pool is getting too small, reset it (but still avoid duplicates within workout)
-    if (availablePool.length < 10) {
-      availablePool = exercisePool.filter(ex => 
-        !allUsedExerciseIds.includes(ex.exercise_id)
-      )
-    }
-  }
-  
-  // Build cooldown
-  const cooldownExercises = getCooldownExercises(availablePool)
-  workout.cooldown.exercises = cooldownExercises
-  
-  // Calculate calories
-  workout.estimated_calories = calculateCalories(workout, userWeight)
-  
-  // Track this workout's exercises for future variety
-  recentWorkoutExercises.push(allUsedExerciseIds)
-  
-  // Keep only last 5 workouts in memory
-  if (recentWorkoutExercises.length > 5) {
-    recentWorkoutExercises.shift()
-  }
-  
-  return workout
-}
-
-// Clear recent workout history (useful for testing or reset)
-export function clearRecentWorkouts() {
-  recentWorkoutExercises = []
-}
-
-// Get workout summary (for display)
-export function getWorkoutSummary(workout) {
-  const totalExercises = 
-    workout.warmup.exercises.length +
-    workout.circuits.reduce((sum, circuit) => 
-      sum + circuit.sections.reduce((s, section) => s + section.exercises.length, 0), 0
-    ) +
-    workout.cooldown.exercises.length
-  
   return {
-    workout_id: workout.workout_id,
-    total_duration: workout.total_duration,
-    total_circuits: workout.circuits.length,
-    total_exercises: totalExercises,
-    estimated_calories: workout.estimated_calories,
-    structure: workout.structure
+    id: 'generated',
+    name: describe(inputs),
+    type: inputs.workout_type,
+    mode: 'sets',
+    intensity: inputs.fitness_level,
+    sets: inputs.sets,
+    exercises,
+    minutes: Math.round(seconds / 60),
+    inputs,
+    createdAt: new Date().toISOString()
   }
 }
+
+const TITLE = {
+  total_body: 'Total Body', upper_body: 'Upper Body', lower_body: 'Lower Body',
+  abs: 'Abs', booty: 'Booty', arms: 'Arms', legs: 'Legs',
+  mixed: 'Mixed', hiit: 'HIIT', strength: 'Strength', kickboxing: 'Kickboxing',
+  yoga: 'Yoga', low_impact: 'Low Impact'
+}
+
+export const label = (key) => TITLE[key] || key
+
+function describe(inputs) {
+  return `${inputs.duration}-min ${label(inputs.target_area)} ${label(inputs.workout_type)}`
+}
+
+export const mainExerciseIds = (workout) =>
+  workout.exercises.filter(e => e.slot !== 'warmup' && e.slot !== 'cooldown').map(e => e.exerciseId)

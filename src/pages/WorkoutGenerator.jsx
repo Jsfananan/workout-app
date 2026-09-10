@@ -1,16 +1,17 @@
 import { Link } from 'react-router-dom'
 import WorkoutGeneratorDemo from '../components/WorkoutGeneratorDemo'
-import './WorkoutGenerator.css'
 
 function WorkoutGenerator() {
   return (
-    <div className="workout-generator-page">
-      <div className="workout-generator-header">
-        <Link to="/" className="back-link">← Back to Home</Link>
-        <h1>Custom Workout Generator</h1>
-        <p className="page-subtitle">Create a personalized workout tailored to your fitness goals</p>
+    <div className="page">
+      <div className="page-container">
+        <div className="page-header">
+          <Link to="/" className="back-link">← Home</Link>
+          <h1>Generate a Workout</h1>
+          <p className="page-subtitle">Warmup, a 3-2-1 main block done in sets, and a cooldown. No timers.</p>
+        </div>
+        <WorkoutGeneratorDemo />
       </div>
-      <WorkoutGeneratorDemo />
     </div>
   )
 }

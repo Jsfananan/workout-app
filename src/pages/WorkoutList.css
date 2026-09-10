@@ -1,52 +1,7 @@
-.workout-list {
-  min-height: 100vh;
-  padding: 2rem;
-}
-
-.workout-list-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.workout-list-header {
-  margin-bottom: 2rem;
-}
-
-.back-link {
-  color: #b85c50;
-  text-decoration: none;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  display: inline-block;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.back-link:hover {
-  color: #9a4d42;
-}
-
-.workout-list-header h1 {
-  color: #1f2937;
-  font-size: 2.5rem;
-  margin-top: 1rem;
-}
-
 .workouts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .workout-card {
@@ -98,21 +53,6 @@
   font-size: 0.9rem;
 }
 
-.difficulty-beginner {
-  color: #10b981;
-  font-weight: 600;
-}
-
-.difficulty-intermediate {
-  color: #f59e0b;
-  font-weight: 600;
-}
-
-.difficulty-advanced {
-  color: #ef4444;
-  font-weight: 600;
-}
-
 .workout-description {
   color: #6b7280;
   line-height: 1.6;
@@ -151,22 +91,10 @@
 }
 
 .workout-card-start {
-  display: inline-block;
   margin-top: 0.5rem;
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
-  background: #F54D4D;
-  color: white;
-  border-radius: 50px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.workout-card-start:hover {
-  background: #e04545;
-  color: white;
-  transform: translateY(-1px);
+  align-self: flex-start;
 }
 
 @media (max-width: 768px) {
