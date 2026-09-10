@@ -9,7 +9,10 @@ function Home() {
         <p className="home-subtitle">Transform your body, one workout at a time</p>
         
         <div className="home-actions">
-          <Link to="/generate" className="btn btn-primary">
+          <Link to="/schedule" className="btn btn-primary">
+            My Week
+          </Link>
+          <Link to="/generate" className="btn btn-secondary">
             Generate Custom Workout
           </Link>
           <Link to="/workouts" className="btn btn-secondary">

@@ -3,6 +3,7 @@ import Home from './pages/Home'
 import WorkoutList from './pages/WorkoutList'
 import WorkoutDetail from './pages/WorkoutDetail'
 import WorkoutGenerator from './pages/WorkoutGenerator'
+import Schedule from './pages/Schedule'
 import './App.css'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path="/workouts" element={<WorkoutList />} />
           <Route path="/workout/:id" element={<WorkoutDetail />} />
           <Route path="/generate" element={<WorkoutGenerator />} />
+          <Route path="/schedule" element={<Schedule />} />
         </Routes>
       </div>
     </Router>
